@@ -20,12 +20,25 @@ HP_ErrorCode HP_Init() {
 }
 
 HP_ErrorCode HP_CreateFile(const char *filename) {
-  CALL_BF(BF_CreateFile(filename));  
+  BF_Block *firstBlock;
+  char* data;
+  int fd;
+
+  BF_Block_Init(&firstBlock);
+  CALL_BF(BF_CreateFile(filename));
+  CALL_BF(BF_OpenFile(filename, &fd));
+  CALL_BF(BF_AllocateBlock(fd, firstBlock));
+  data = BF_Block_GetData(firstBlock);
+  memcpy(data, "Heapfile", 8);
+  CALL_BF(BF_UnpinBlock(firstBlock));
+  BF_Block_Destroy(&firstBlock);
+
   return HP_OK;
 }
 
 HP_ErrorCode HP_OpenFile(const char *fileName, int *fileDesc){
   CALL_BF(BF_OpenFile(fileName, fileDesc));
+  
   return HP_OK;
 }
 HP_ErrorCode HP_CloseFile(int fileDesc) {
