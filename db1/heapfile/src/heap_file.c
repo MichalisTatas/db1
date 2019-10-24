@@ -68,6 +68,7 @@ HP_ErrorCode HP_InsertEntry(int fileDesc, Record record) {
   memcpy(data ,record.name, sizeof(record.name));
   memcpy(data + 64, record.surname, sizeof(record.surname)); 
   memcpy(data + 128, record.city, sizeof(record.city));
+  memcpy(data + 192, &record.id, sizeof(record.id));
   BF_Block_SetDirty(myBlock); 
   CALL_BF(BF_UnpinBlock(myBlock));
   BF_Block_Destroy(&myBlock);
@@ -85,7 +86,22 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
   for(int i=1; i<blocks_number; i++) {
     CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
     data = BF_Block_GetData(myBlock);
-    printf("%s %s %s \n", data, data  + 64, data + 128);
+
+    if(strcmp(data, attrName)) {
+      if(!strcmp(data, value))   
+        printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+    }
+
+    if(strcmp(data + 64, attrName)) {
+      if(!strcmp(data+64, value))
+        printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+    }
+
+    if(strcmp(data + 128, attrName)) {
+      if(!strcmp(data+128, value))
+        printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+    }
+
     CALL_BF(BF_UnpinBlock(myBlock));
   }
   BF_Block_Destroy(&myBlock);
