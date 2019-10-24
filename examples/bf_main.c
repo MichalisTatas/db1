@@ -21,7 +21,7 @@ int main() {
   CALL_OR_DIE(BF_Init(LRU));
   CALL_OR_DIE(BF_CreateFile("data.db"))
   CALL_OR_DIE(BF_OpenFile("data.db", &fd));
-
+  
   char* data;
   for (int i = 0; i < 1000; ++i) {
     CALL_OR_DIE(BF_AllocateBlock(fd, block));
