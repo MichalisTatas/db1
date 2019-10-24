@@ -37,8 +37,17 @@ HP_ErrorCode HP_CreateFile(const char *filename) {
 }
 
 HP_ErrorCode HP_OpenFile(const char *fileName, int *fileDesc){
+  BF_Block* myBlock;
+  int fd;
+  char* data;
+  BF_Block_Init(&myBlock);
   CALL_BF(BF_OpenFile(fileName, fileDesc));
-  
+  CALL_BF(BF_AllocateBlock(fd, myBlock));
+  data = BF_Block_GetData(myBlock);
+  if(!strcmp("Heapfile", data))
+    return 0;
+  CALL_BF(BF_UnpinBlock(myBlock));
+  BF_Block_Destroy(&myBlock);
   return HP_OK;
 }
 HP_ErrorCode HP_CloseFile(int fileDesc) {
@@ -47,7 +56,7 @@ HP_ErrorCode HP_CloseFile(int fileDesc) {
 }
 
 HP_ErrorCode HP_InsertEntry(int fileDesc, Record record) {
-  //insert code here
+  
   return HP_OK;
 }
 
