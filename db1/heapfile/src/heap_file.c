@@ -87,19 +87,16 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
     CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
     data = BF_Block_GetData(myBlock);
 
-    if(strcmp(data, attrName)) {
-      if(!strcmp(data, value))   
-        printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+    if(strcmp(data, attrName) && !strcmp(data, value)) {
+      printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
     }
 
-    if(strcmp(data + 64, attrName)) {
-      if(!strcmp(data+64, value))
-        printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+    if(strcmp(data + 64, attrName) && !strcmp(data+64, value)) {
+      printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
     }
 
-    if(strcmp(data + 128, attrName)) {
-      if(!strcmp(data+128, value))
-        printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+    if(strcmp(data + 128, attrName) && !strcmp(data+128, value)) {
+      printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
     }
 
     CALL_BF(BF_UnpinBlock(myBlock));
@@ -110,6 +107,24 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
 }
 
 HP_ErrorCode HP_GetEntry(int fileDesc, int rowId, Record *record) {
-  //insert code here
+  BF_Block* myBlock;
+  char* data;
+  int blocks_number;
+
+  BF_Block_Init(&myBlock);
+  CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
+  for(int i=1; i<blocks_number; i++) {
+    CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
+    data = BF_Block_GetData(myBlock);
+    if(*(int*)(data + 192) == rowId) {
+      strcpy(record->name, data);
+      strcpy(record->surname, data + 64);
+      strcpy(record->city, data + 128);
+      record->id = *(int*)(data + 192);
+    }
+    CALL_BF(BF_UnpinBlock(myBlock));
+  }
+  BF_Block_Destroy(&myBlock);
+
   return HP_OK;
 }
