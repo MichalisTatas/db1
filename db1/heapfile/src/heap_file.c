@@ -109,22 +109,15 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
 HP_ErrorCode HP_GetEntry(int fileDesc, int rowId, Record *record) {
   BF_Block* myBlock;
   char* data;
-  int blocks_number;
 
   BF_Block_Init(&myBlock);
-  CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
-  for(int i=1; i<blocks_number; i++) {
-    CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
-    data = BF_Block_GetData(myBlock);
-    if(*(int*)(data + 192) == rowId) {
-      strcpy(record->name, data);
-      strcpy(record->surname, data + 64);
-      strcpy(record->city, data + 128);
-      record->id = *(int*)(data + 192);
-    }
-    CALL_BF(BF_UnpinBlock(myBlock));
-  }
+  CALL_BF(BF_GetBlock(fileDesc, rowId, myBlock));
+  data = BF_Block_GetData(myBlock);
+  memcpy(record->name, data, strlen(data));
+  memcpy(record->surname, data + 64, strlen(data));
+  memcpy(record->city, data + 128, strlen(data));
+  record->id = *(int*)(data + 192);
+  CALL_BF(BF_UnpinBlock(myBlock));
   BF_Block_Destroy(&myBlock);
-
   return HP_OK;
 }
