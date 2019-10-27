@@ -59,17 +59,32 @@ HP_ErrorCode HP_CloseFile(int fileDesc) {
 
 HP_ErrorCode HP_InsertEntry(int fileDesc, Record record) {
   BF_Block* myBlock;
-  char* data;
-  
-  BF_Block_Init(&myBlock);
-  CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
-  CALL_BF(BF_GetBlock(fileDesc, record.id, myBlock));
+  int blocks_number;
+  char* data;  
+
+  BF_Block_Init (&myBlock);
+  CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
+  CALL_BF(BF_GetBlock(fileDesc, blocks_number - 1, myBlock));
   data = BF_Block_GetData(myBlock);
-  memcpy(data ,record.name, sizeof(record.name));
-  memcpy(data + 64, record.surname, sizeof(record.surname)); 
-  memcpy(data + 128, record.city, sizeof(record.city));
-  memcpy(data + 192, &record.id, sizeof(record.id));
-  BF_Block_SetDirty(myBlock); 
+  if(blocks_number == 1) {
+    CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
+    data = BF_Block_GetData(myBlock);
+    memset(data, 1, 1);
+    memcpy(data + 1, &record, sizeof(record));
+    BF_Block_SetDirty(myBlock); 
+  }
+  else if(*data != 8) {
+    memset(data, *data + 1, 1);
+    memcpy(data + (*data)*sizeof(record) + 1, &record, sizeof(record));
+  }
+  else if(*data == 8) {
+    CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
+    data = BF_Block_GetData(myBlock);
+    memset(data, 1, 1);
+    memcpy(data + 1, &record, sizeof(record));
+    BF_Block_SetDirty(myBlock);
+  }
+  // BF_Block_SetDirty(myBlock);
   CALL_BF(BF_UnpinBlock(myBlock));
   BF_Block_Destroy(&myBlock);
   return HP_OK;
@@ -83,41 +98,49 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
   
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
 
-  for(int i=1; i<blocks_number; i++) {
+
+  for(int i=1; i<=blocks_number; i++) {
     CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
     data = BF_Block_GetData(myBlock);
-
-    if(strcmp(data, attrName) && !strcmp(data, value)) {
-      printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+    for(int j=0; j<=(*data); j++) {
+      printf("%s %s %s %d \n",data + j*60 + 5, data + j*60+ 20, data + j*60 + 40, *(int*)(data + j*60 + 1));
     }
-
-    if(strcmp(data + 64, attrName) && !strcmp(data+64, value)) {
-      printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
-    }
-
-    if(strcmp(data + 128, attrName) && !strcmp(data+128, value)) {
-      printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
-    }
-
     CALL_BF(BF_UnpinBlock(myBlock));
   }
+  //   CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
+  //   data = BF_Block_GetData(myBlock);
+
+  //   if(strcmp(data, attrName) && !strcmp(data, value)) {
+  //     printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+  //   }
+
+  //   if(strcmp(data + 64, attrName) && !strcmp(data+64, value)) {
+  //     printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+  //   }
+
+  //   if(strcmp(data + 128, attrName) && !strcmp(data+128, value)) {
+  //     printf("%s %s %s %d \n", data, data  + 64, data + 128, *(int*)(data + 192));
+  //   }
+
+  //   CALL_BF(BF_UnpinBlock(myBlock));
+  // }
   BF_Block_Destroy(&myBlock);
 
   return HP_OK;
 }
 
 HP_ErrorCode HP_GetEntry(int fileDesc, int rowId, Record *record) {
-  BF_Block* myBlock;
-  char* data;
+  // BF_Block* myBlock;
+  // char* data;
 
-  BF_Block_Init(&myBlock);
-  CALL_BF(BF_GetBlock(fileDesc, rowId, myBlock));
-  data = BF_Block_GetData(myBlock);
-  memcpy(record->name, data, strlen(data));
-  memcpy(record->surname, data + 64, strlen(data));
-  memcpy(record->city, data + 128, strlen(data));
-  record->id = *(int*)(data + 192);
-  CALL_BF(BF_UnpinBlock(myBlock));
-  BF_Block_Destroy(&myBlock);
+  // BF_Block_Init(&myBlock);
+  // CALL_BF(BF_GetBlock(fileDesc, rowId, myBlock));
+  // data = BF_Block_GetData(myBlock);
+  // memcpy(record->name, data, strlen(data));
+  // memcpy(record->surname, data + 64, strlen(data));
+  // memcpy(record->city, data + 128, strlen(data));
+  // record->id = *(int*)(data + 192);
+  // CALL_BF(BF_UnpinBlock(myBlock));
+  // BF_Block_Destroy(&myBlock);
   return HP_OK;
 }
