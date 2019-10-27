@@ -66,26 +66,32 @@ HP_ErrorCode HP_InsertEntry(int fileDesc, Record record) {
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
   CALL_BF(BF_GetBlock(fileDesc, blocks_number - 1, myBlock));
   data = BF_Block_GetData(myBlock);
+  // printf("%d\n" , *data);
   if(blocks_number == 1) {
+    CALL_BF(BF_UnpinBlock(myBlock));
     CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
+    CALL_BF(BF_GetBlock(fileDesc, blocks_number, myBlock));
     data = BF_Block_GetData(myBlock);
     memset(data, 1, 1);
     memcpy(data + 1, &record, sizeof(record));
     BF_Block_SetDirty(myBlock); 
   }
-  else if(*data != 8) {
+  else if(*data < 7) {
     memset(data, *data + 1, 1);
     memcpy(data + (*data)*sizeof(record) + 1, &record, sizeof(record));
   }
-  else if(*data == 8) {
+  else if(*data == 7) {
+    memset(data, 7, 1);
+    CALL_BF(BF_UnpinBlock(myBlock));
     CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
+    CALL_BF(BF_GetBlock(fileDesc, blocks_number, myBlock));
     data = BF_Block_GetData(myBlock);
     memset(data, 1, 1);
     memcpy(data + 1, &record, sizeof(record));
     BF_Block_SetDirty(myBlock);
   }
-  // BF_Block_SetDirty(myBlock);
   CALL_BF(BF_UnpinBlock(myBlock));
+  // BF_Block_SetDirty(myBlock);
   BF_Block_Destroy(&myBlock);
   return HP_OK;
 }
