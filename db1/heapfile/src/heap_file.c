@@ -66,9 +66,9 @@ HP_ErrorCode HP_InsertEntry(int fileDesc, Record record) {
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
   CALL_BF(BF_GetBlock(fileDesc, blocks_number - 1, myBlock));
   data = BF_Block_GetData(myBlock);
-
-  if(blocks_number == 1) {
-    CALL_BF(BF_UnpinBlock(myBlock));
+  if(blocks_number == 0) {
+    printf("MALAKA");
+    CALL_BF(BF_UnpinBlock(myBlock));                 //??
     CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
     CALL_BF(BF_GetBlock(fileDesc, blocks_number, myBlock));
     data = BF_Block_GetData(myBlock);
@@ -79,14 +79,14 @@ HP_ErrorCode HP_InsertEntry(int fileDesc, Record record) {
     memcpy(data + 40, record.city, 20);
     BF_Block_SetDirty(myBlock);
   }
-  else if(*data < 8) {
+  else if(*data < 7) {
     memset(data, *data + 1, 1);
-    memcpy(data + (*data)*56 + 1,  &record.id, 4);
-    memcpy(data + (*data)*56 + 5, record.name, 15);
-    memcpy(data + (*data)*56 + 20, record.surname, 20);
-    memcpy(data + (*data)*56 + 40, record.city, 20);
+    memcpy(data + (*data)*59 + 1,  &record.id, 4);
+    memcpy(data + (*data)*59 + 5, record.name, 15);
+    memcpy(data + (*data)*59 + 20, record.surname, 20);
+    memcpy(data + (*data)*59 + 40, record.city, 20);
   }
-  else if(*data == 8) {
+  else if(*data == 7) {
     memset(data, *data + 1, 1);
     CALL_BF(BF_UnpinBlock(myBlock));
     CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
@@ -116,19 +116,19 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
   for(int i=0; i<blocks_number; i++) {
     CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
     data = BF_Block_GetData(myBlock);
-    for(int j=0; j<*data; j++) {
-      printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
-      // if((strcmp("name", attrName) == 0) && (strcmp(data + j*56 + 5, value) == 0)) {
-      //   printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
-      // }
+    for(int j=0; j<=(*data); j++) {   //an balw to = ektipwnei allo ena kai polla 0 alliws oxi
+      printf("%s %s %s %d \n",data + j*59 + 5, data + j*59+ 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
+    //   if((strcmp("name", attrName) == 0) && (strcmp(data + j*59 + 5, value) == 0)) {
+    //     printf("%s %s %s %d \n",data + j*59 + 5, data + j*59 + 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
+    //   }
 
-      // if((strcmp("surname", attrName) == 0) && (strcmp(data + j*56 + 20, value) == 0)) {
-      //   printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
-      // }
+    //   if((strcmp("surname", attrName) == 0) && (strcmp(data + j*59 + 20, value) == 0)) {
+    //     printf("%s %s %s %d \n",data + j*59 + 5, data + j*59+ 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
+    //   }
 
-      // if((strcmp("city", attrName) == 0) && (strcmp(data + j*56 + 40, value) == 0)) {
-      //   printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
-      // }
+    //   if((strcmp("city", attrName) == 0) && (strcmp(data + j*59 + 40, value) == 0)) {
+    //     printf("%s %s %s %d \n",data + j*59 + 5, data + j*59 + 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
+    //   }
 
     }
     printf("\n--------------------------------------------\n");
@@ -146,12 +146,12 @@ HP_ErrorCode HP_GetEntry(int fileDesc, int rowId, Record *record) {
 
   BF_Block_Init(&myBlock);
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
-  CALL_BF(BF_GetBlock(fileDesc, rowId/9 + 1, myBlock));
+  CALL_BF(BF_GetBlock(fileDesc, rowId/8 + 1, myBlock));
   data = BF_Block_GetData(myBlock);
-  memcpy(record->name, data + (rowId%9)*56 + 5, 15);
-  memcpy(record->surname, data + (rowId%9)*56 + 20, 20);
-  memcpy(record->city, data + (rowId%9)*56 + 40, 20);
-  record->id = *(int*)(data + (rowId%9)*56 + 1);
+  memcpy(record->name, data + (rowId%8)*59 + 5, 15);
+  memcpy(record->surname, data + (rowId%8)*59 + 20, 20);
+  memcpy(record->city, data + (rowId%8)*59 + 40, 20);
+  record->id = *(int*)(data + (rowId%8)*59 + 1);
   CALL_BF(BF_UnpinBlock(myBlock));
   BF_Block_Destroy(&myBlock);
   return HP_OK;

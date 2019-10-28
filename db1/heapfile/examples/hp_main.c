@@ -73,8 +73,8 @@ void TestFileScan(int fileDesc) {
   for (int j = 1; j <= 500; ++j) {
     for (int id = RECORDS_NUM; id != 0; --id) {
       CALL_OR_DIE(HP_GetEntry(fileDesc, id, &record));
-      printf("%d,\"%s\",\"%s\",\"%s\"\n",
-             record.id, record.name, record.surname, record.city);
+      // printf("%d,\"%s\",\"%s\",\"%s\"\n",
+      //        record.id, record.name, record.surname, record.city);
     }
   }
 }
