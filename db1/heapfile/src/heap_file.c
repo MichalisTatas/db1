@@ -67,31 +67,30 @@ HP_ErrorCode HP_InsertEntry(int fileDesc, Record record) {
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
   CALL_BF(BF_GetBlock(fileDesc, blocks_number - 1, myBlock));
   data = BF_Block_GetData(myBlock);
-  if(blocks_number == 1) {
+  if(strcmp(data, "Heapfile") == 0) {
     CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
     CALL_BF(BF_GetBlock(fileDesc, 1, myBlock));
     data = BF_Block_GetData(myBlock);
-    memset(data, 0, 1);
+    memset(data, 1, 1);
     memcpy(data + 1, &record.id, 4);
     memcpy(data + 5, record.name, 15);
     memcpy(data + 20, record.surname, 20);
     memcpy(data + 40, record.city, 20);
     BF_Block_SetDirty(myBlock);
   }
-  else if(*data < 7) {
+  else if(*data < 8) {
     memset(data, *data + 1, 1);
-    memcpy(data + (*data)*59 + 1,  &record.id, 4);
-    memcpy(data + (*data)*59 + 5, record.name, 15);
-    memcpy(data + (*data)*59 + 20, record.surname, 20);
-    memcpy(data + (*data)*59 + 40, record.city, 20);
+    memcpy(data + (*data-1)*59 + 1, &record.id, 4);                     //data - 1 is used because the registrations should start at the 2nd byte
+    memcpy(data + (*data-1)*59 + 5, record.name, 15);                   //of the block
+    memcpy(data + (*data-1)*59 + 20, record.surname, 20);
+    memcpy(data + (*data-1)*59 + 40, record.city, 20);
   }
-  else if(*data == 7) {
-    memset(data, *data + 1, 1);
+  else if(*data == 8) {
     CALL_BF(BF_UnpinBlock(myBlock));
     CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
     CALL_BF(BF_GetBlock(fileDesc, blocks_number, myBlock));
     data = BF_Block_GetData(myBlock);
-    memset(data, 0, 1);
+    memset(data, 1, 1);
     memcpy(data + 1, &record.id, 4);
     memcpy(data + 5, record.name, 15);
     memcpy(data + 20, record.surname, 20);
@@ -115,20 +114,19 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
   for(int i=1; i<blocks_number; i++) {
     CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
     data = BF_Block_GetData(myBlock);
-    printf("%d\n", *data);
-    for(int j=0; j<(*data); j++) {   //an balw to = ektipwnei allo ena kai polla 0 alliws oxi
-      printf("%s %s %s %d \n",data + j*59 + 5, data + j*59+ 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
-    //   if((strcmp("name", attrName) == 0) && (strcmp(data + j*59 + 5, value) == 0)) {
-    //     printf("%s %s %s %d \n",data + j*59 + 5, data + j*59 + 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
-    //   }
+    for(int j=0; j<(*data); j++) {
 
-    //   if((strcmp("surname", attrName) == 0) && (strcmp(data + j*59 + 20, value) == 0)) {
-    //     printf("%s %s %s %d \n",data + j*59 + 5, data + j*59+ 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
-    //   }
+      if((strcmp("name", attrName) == 0) && (strcmp(data + j*59 + 5, value) == 0)) {
+        printf("%s %s %s %d \n",data + j*59 + 5, data + j*59 + 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
+      }
 
-    //   if((strcmp("city", attrName) == 0) && (strcmp(data + j*59 + 40, value) == 0)) {
-    //     printf("%s %s %s %d \n",data + j*59 + 5, data + j*59 + 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
-    //   }
+      if((strcmp("surname", attrName) == 0) && (strcmp(data + j*59 + 20, value) == 0)) {
+        printf("%s %s %s %d \n",data + j*59 + 5, data + j*59+ 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
+      }
+
+      if((strcmp("city", attrName) == 0) && (strcmp(data + j*59 + 40, value) == 0)) {
+        printf("%s %s %s %d \n",data + j*59 + 5, data + j*59 + 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
+      }
 
     }
     CALL_BF(BF_UnpinBlock(myBlock));
