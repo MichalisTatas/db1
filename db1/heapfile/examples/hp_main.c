@@ -106,16 +106,16 @@ int main() {
     CALL_OR_DIE(HP_InsertEntry(fd, record));
   }
 
-  // printf("RUN TestFileScan\n");
-  // RUN_AND_TIME(TestFileScan(fd));
+  printf("RUN TestFileScan\n");
+  RUN_AND_TIME(TestFileScan(fd));
 
-  // printf("RUN PrintAllEntries\n");
-  // CALL_OR_DIE(HP_PrintAllEntries(fd, "city", (void *)"San Francisco"));
+  printf("RUN PrintAllEntries\n");
+  CALL_OR_DIE(HP_PrintAllEntries(fd, "city", (void *)"San Francisco"));
 
-  // printf("Get Entry with rowid 1000\n");
-  // CALL_OR_DIE(HP_GetEntry(fd, 1000, &record));
-  // printf("%d,\"%s\",\"%s\",\"%s\"\n",
-  //     record.id, record.name, record.surname, record.city);
+  printf("Get Entry with rowid 1000\n");
+  CALL_OR_DIE(HP_GetEntry(fd, 1000, &record));
+  printf("%d,\"%s\",\"%s\",\"%s\"\n",
+      record.id, record.name, record.surname, record.city);
 
   CALL_OR_DIE(HP_CloseFile(fd));
   BF_Close();
