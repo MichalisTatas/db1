@@ -30,6 +30,7 @@ HP_ErrorCode HP_CreateFile(const char *filename) {
   CALL_BF(BF_AllocateBlock(fd, firstBlock));
   data = BF_Block_GetData(firstBlock);
   memcpy(data, "Heapfile", 8);
+  BF_Block_SetDirty(firstBlock);
   CALL_BF(BF_UnpinBlock(firstBlock));
   BF_Block_Destroy(&firstBlock);
 
@@ -43,9 +44,9 @@ HP_ErrorCode HP_OpenFile(const char *fileName, int *fileDesc){
 
   BF_Block_Init(&myBlock);
   CALL_BF(BF_OpenFile(fileName, fileDesc));
-  CALL_BF(BF_AllocateBlock(fd, myBlock));
+  CALL_BF(BF_GetBlock(*fileDesc, 0, myBlock));
   data = BF_Block_GetData(myBlock);
-  if(!strcmp("Heapfile", data))
+  if(strcmp("Heapfile", data) != 0)
     return 0;
   CALL_BF(BF_UnpinBlock(myBlock));
   BF_Block_Destroy(&myBlock);
@@ -66,11 +67,9 @@ HP_ErrorCode HP_InsertEntry(int fileDesc, Record record) {
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
   CALL_BF(BF_GetBlock(fileDesc, blocks_number - 1, myBlock));
   data = BF_Block_GetData(myBlock);
-  if(blocks_number == 0) {
-    printf("MALAKA");
-    CALL_BF(BF_UnpinBlock(myBlock));                 //??
+  if(blocks_number == 1) {
     CALL_BF(BF_AllocateBlock(fileDesc, myBlock));
-    CALL_BF(BF_GetBlock(fileDesc, blocks_number, myBlock));
+    CALL_BF(BF_GetBlock(fileDesc, 1, myBlock));
     data = BF_Block_GetData(myBlock);
     memset(data, 0, 1);
     memcpy(data + 1, &record.id, 4);
@@ -113,10 +112,11 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
   
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
 
-  for(int i=0; i<blocks_number; i++) {
+  for(int i=1; i<blocks_number; i++) {
     CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
     data = BF_Block_GetData(myBlock);
-    for(int j=0; j<=(*data); j++) {   //an balw to = ektipwnei allo ena kai polla 0 alliws oxi
+    printf("%d\n", *data);
+    for(int j=0; j<(*data); j++) {   //an balw to = ektipwnei allo ena kai polla 0 alliws oxi
       printf("%s %s %s %d \n",data + j*59 + 5, data + j*59+ 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
     //   if((strcmp("name", attrName) == 0) && (strcmp(data + j*59 + 5, value) == 0)) {
     //     printf("%s %s %s %d \n",data + j*59 + 5, data + j*59 + 20, data + j*59 + 40, *(int*)(data + j*59 + 1));
@@ -131,7 +131,6 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
     //   }
 
     }
-    printf("\n--------------------------------------------\n");
     CALL_BF(BF_UnpinBlock(myBlock));
   }
   BF_Block_Destroy(&myBlock);
@@ -146,12 +145,12 @@ HP_ErrorCode HP_GetEntry(int fileDesc, int rowId, Record *record) {
 
   BF_Block_Init(&myBlock);
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
-  CALL_BF(BF_GetBlock(fileDesc, rowId/8 + 1, myBlock));
+  CALL_BF(BF_GetBlock(fileDesc, rowId/8, myBlock));
   data = BF_Block_GetData(myBlock);
-  memcpy(record->name, data + (rowId%8)*59 + 5, 15);
-  memcpy(record->surname, data + (rowId%8)*59 + 20, 20);
-  memcpy(record->city, data + (rowId%8)*59 + 40, 20);
-  record->id = *(int*)(data + (rowId%8)*59 + 1);
+  memcpy(record->name, data + ((rowId-1)%8)*59 + 5, 15);           //rowId - 1 is used in order to find the position
+  memcpy(record->surname, data + ((rowId-1)%8)*59 + 20, 20);       //because the registrations start from 0  
+  memcpy(record->city, data + ((rowId-1)%8)*59 + 40, 20);          //so the 1000th is actually the 999th
+  record->id = *(int*)(data + ((rowId-1)%8)*59 + 1);
   CALL_BF(BF_UnpinBlock(myBlock));
   BF_Block_Destroy(&myBlock);
   return HP_OK;
