@@ -113,26 +113,25 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
   
   CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
 
-  for(int i=0; i<blocks_number-1; i++) {
+  for(int i=0; i<blocks_number; i++) {
     CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
     data = BF_Block_GetData(myBlock);
-    for(int j=0; j<(*data); j++) {
-      CALL_BF(BF_GetBlock(fileDesc, i, myBlock));
-      data = BF_Block_GetData(myBlock);
+    for(int j=0; j<*data; j++) {
+      printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
+      // if((strcmp("name", attrName) == 0) && (strcmp(data + j*56 + 5, value) == 0)) {
+      //   printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
+      // }
 
-      if((strcmp("name", attrName) == 0) && (strcmp(data + j*56 + 5, value) == 0)) {
-        printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
-      }
+      // if((strcmp("surname", attrName) == 0) && (strcmp(data + j*56 + 20, value) == 0)) {
+      //   printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
+      // }
 
-      if((strcmp("surname", attrName) == 0) && (strcmp(data + j*56 + 20, value) == 0)) {
-        printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
-      }
-
-      if((strcmp("city", attrName) == 0) && (strcmp(data + j*56 + 40, value) == 0)) {
-        printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
-      }
+      // if((strcmp("city", attrName) == 0) && (strcmp(data + j*56 + 40, value) == 0)) {
+      //   printf("%s %s %s %d \n",data + j*56 + 5, data + j*56+ 20, data + j*56 + 40, *(int*)(data + j*56 + 1));
+      // }
 
     }
+    printf("\n--------------------------------------------\n");
     CALL_BF(BF_UnpinBlock(myBlock));
   }
   BF_Block_Destroy(&myBlock);
@@ -141,17 +140,19 @@ HP_ErrorCode HP_PrintAllEntries(int fileDesc, char *attrName, void* value) {
 }
 
 HP_ErrorCode HP_GetEntry(int fileDesc, int rowId, Record *record) {
-  // BF_Block* myBlock;
-  // char* data;
+  BF_Block* myBlock;
+  int blocks_number;
+  char* data;
 
-  // BF_Block_Init(&myBlock);
-  // CALL_BF(BF_GetBlock(fileDesc, rowId, myBlock));
-  // data = BF_Block_GetData(myBlock);
-  // memcpy(record->name, data, strlen(data));
-  // memcpy(record->surname, data + 64, strlen(data));
-  // memcpy(record->city, data + 128, strlen(data));
-  // record->id = *(int*)(data + 192);
-  // CALL_BF(BF_UnpinBlock(myBlock));
-  // BF_Block_Destroy(&myBlock);
+  BF_Block_Init(&myBlock);
+  CALL_BF(BF_GetBlockCounter(fileDesc, &blocks_number));
+  CALL_BF(BF_GetBlock(fileDesc, rowId/9 + 1, myBlock));
+  data = BF_Block_GetData(myBlock);
+  memcpy(record->name, data + (rowId%9)*56 + 5, 15);
+  memcpy(record->surname, data + (rowId%9)*56 + 20, 20);
+  memcpy(record->city, data + (rowId%9)*56 + 40, 20);
+  record->id = *(int*)(data + (rowId%9)*56 + 1);
+  CALL_BF(BF_UnpinBlock(myBlock));
+  BF_Block_Destroy(&myBlock);
   return HP_OK;
 }
